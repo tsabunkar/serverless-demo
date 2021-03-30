@@ -1,0 +1,6 @@
+service: first-service
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  profile: dev-sls-profile

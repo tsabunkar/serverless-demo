@@ -1,0 +1,26 @@
+service: first-sls-lambda
+app: first-sls-app
+provider:
+  name: aws
+  runtime: nodejs12.x
+  timeout: 60
+  memorySize: 128
+  deploymentBucket: sls-bucket-codebase
+  # you can overwrite defaults here
+  stage: dev
+  region: us-east-1
+
+functions:
+  foo:
+    handler: handler.foo
+    description: Hello world Lambda function
+    memorySize: 128
+    timeout: 60
+    events:
+      - http: GET /hello
+    #   #- http: POST /hello
+    #   - http: 'ANY {proxy+}'
+     
+plugins:
+  - serverless-offline
+  # - serverless-aws-alias

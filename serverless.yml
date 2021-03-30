@@ -1,0 +1,79 @@
+service:
+  name: serverless-aws-lambda-s3-nestjs
+
+useDotenv: true
+
+plugins:
+  # - '@hewmen/serverless-plugin-typescript'
+  # - serverless-plugin-optimize
+  - serverless-offline
+  # - serverless-plugin-warmup
+
+# custom:
+#   # Enable warmup on all functions (only for production and staging)
+#   warmup:
+#       - production
+#       - staging
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: ${opt:region, env:AWS_REGION}
+  # stage: ${opt:stage, 'local'}
+  stage: ${opt:stage, 'dev'}
+  profile: dev-sls-profile
+  # deploymentBucket:
+  #   name: ${env:SLS_DEPLOYMENT_BUCKET}
+  #   blockPublicAccess: true
+  # endpointType: private
+  # environment:
+  #   AWS_NODEJS_CONNECTION_REUSE_ENABLED: ${env:LAMBDA_AWS_NODEJS_CONNECTION_REUSE_ENABLED, '1'}
+
+package:
+  # individually: true
+  include:
+    - dist/**.js
+  exclude:
+    - ./**.md
+    - ./**.env*
+    - ./tsconfig*.json
+    - coverage/**
+    - nest-cli.json
+    - src/**
+    - docker/**
+    - docs/**
+    - test/**
+
+# custom:
+#   infraStack: serverless-aws-lambda-s3-nestjs-s3-${opt:stage}
+resources:
+  Resources:
+    DemoBucketUpload:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: serverless-aws-lambda-s3-nestjs-bucket # create a unqiue bucket
+
+functions:
+  main:
+    handler: dist/serverless.handler
+    timeout: 600 # 10 minutes
+    # environment:
+    # S3_EXPORT_BUCKET_NAME: ${cf:${self:custom.infraStack}.exportBucketName}
+    #   SSM_DATABASE_USER_SECRET_ID: ${env:SSM_DATABASE_USER_SECRET_ID}
+    events:
+      - s3:
+          # bucket: ${cf:${self.custom.infraStack}.exportBucketName}
+          # bucket: ${self:custom.${self:custom.env}.s3}
+          bucket: serverless-aws-lambda-s3-nestjs-bucket # Upload to this bucket and then your lambda will invoke
+          event: s3:ObjectCreated:*
+          existing: true
+          rules:
+            - suffix: .xml
+      # - http:
+      #     cors: true
+      #     path: '/'
+      #     method: GET
+      # - http:
+      #     cors: true
+      #     path: '{proxy+}'
+      #     method: any
